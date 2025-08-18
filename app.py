@@ -97,6 +97,9 @@ st.markdown("""
 def initialize_session_state():
     if 'recorder' not in st.session_state:
         st.session_state.recorder = AudioRecorder()
+        # Check if audio device is available
+        if not st.session_state.recorder.has_audio_device:
+            st.session_state.error_message = "No audio input device found. Recording functionality will be disabled."
     if 'player' not in st.session_state:
         st.session_state.player = AudioPlayer()
     if 'whisper_api' not in st.session_state:
@@ -237,7 +240,9 @@ def play_response():
     """Play the last generated response."""
     if st.session_state.last_audio_path and os.path.exists(st.session_state.last_audio_path):
         try:
+            print("Playing the audio...")
             st.session_state.player.play_wav(st.session_state.last_audio_path)
+            print("Finished playing the audio.") 
         except Exception as e:
             st.error(f"Error playing audio: {e}")
 
@@ -270,7 +275,8 @@ def render_controls():
             if st.button("Stop Recording", key="stop"):
                 stop_and_process_recording()
         else:
-            if st.button("Start Recording", key="start", type="primary", disabled=(st.session_state.status == 'processing')):
+            disabled_condition = (st.session_state.status == 'processing') or not st.session_state.recorder.has_audio_device
+            if st.button("Start Recording", key="start", type="primary", disabled=disabled_condition):
                 start_recording()
     
     with col2:

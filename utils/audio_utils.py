@@ -10,10 +10,17 @@ class AudioRecorder:
     def __init__(self, chunk=1024, channels=1, sample_rate=None):
         self.chunk = chunk
         self.channels = channels
+        self.has_audio_device = True  # Assume we have a device initially
+
         # Use default sample rate if not provided
         if sample_rate is None:
-            device_info = sd.query_devices(sd.default.device[0], 'input')
-            self.sample_rate = device_info['default_samplerate']
+            try:
+                device_info = sd.query_devices(sd.default.device[0], 'input')
+                self.sample_rate = device_info['default_samplerate']
+            except sd.PortAudioError:
+                # If we can't query the device, use a default sample rate and mark no device
+                self.sample_rate = 16000
+                self.has_audio_device = False
         else:
             self.sample_rate = sample_rate
             
