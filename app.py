@@ -96,10 +96,15 @@ st.markdown("""
 # Initialize session state
 def initialize_session_state():
     if 'recorder' not in st.session_state:
-        st.session_state.recorder = AudioRecorder()
-        # Check if audio device is available
-        if not st.session_state.recorder.has_audio_device:
-            st.session_state.error_message = "No audio input device found. Recording functionality will be disabled."
+        # Check if running on Streamlit Cloud
+        if os.getenv('STREAMLIT_SERVER_ENVIRONMENT') == 'cloud':
+            st.session_state.recorder = None
+            st.session_state.error_message = "Recording is not supported on Streamlit Cloud. Please run locally to use voice features."
+        else:
+            st.session_state.recorder = AudioRecorder()
+            # Check if audio device is available
+            if not st.session_state.recorder.has_audio_device:
+                st.session_state.error_message = "No audio input device found. Recording functionality will be disabled."
     if 'player' not in st.session_state:
         st.session_state.player = AudioPlayer()
     if 'whisper_api' not in st.session_state:
@@ -153,6 +158,8 @@ def load_environment():
 # Recording and Processing Functions (Single-Threaded)
 def start_recording():
     """Sets the app to recording mode."""
+    if st.session_state.recorder is None:
+        return
     if not st.session_state.env_loaded:
         st.session_state.error_message = "Cannot start recording. API keys are not loaded."
         return
